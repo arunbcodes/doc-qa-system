@@ -1,0 +1,18 @@
+# PDF Q&A System - Phase 1 MVP Requirements
+
+# PDF parsing
+docling>=1.0.0
+
+# Text chunking
+langchain-text-splitters>=0.2.0
+
+# Embeddings
+sentence-transformers>=2.2.0
+torch>=2.0.0
+
+# Vector database
+chromadb>=0.4.0
+
+# Additional dependencies
+numpy>=1.24.0
+
