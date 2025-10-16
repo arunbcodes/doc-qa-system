@@ -1,39 +1,32 @@
+#!/usr/bin/env python3
 """
-Main CLI for PDF Q&A System
-Orchestrates PDF processing, embedding, and interactive querying.
+PDF Q&A System - Main Entry Point (Phase 1: Retrieval Only)
+Processes PDF and returns relevant text chunks for queries.
 """
 
 import sys
 import os
 from pathlib import Path
 
-from pdf_parser import PDFParser
-from text_chunker import TextChunker
-from embeddings import EmbeddingModel
-from vector_store import VectorStore
-from query_interface import QueryInterface
+# Add src to path
+sys.path.insert(0, str(Path(__file__).parent / 'src'))
+
+from src.extract import PDFParser
+from src.chunk import TextChunker
+from src.embed import EmbeddingModel
+from src.vector_store import VectorStore
+from src.query import QueryInterface
 
 
 def print_banner():
     """Print application banner."""
     print("\n" + "="*80)
-    print("PDF Q&A System - Phase 1 MVP")
+    print("PDF Q&A System - Phase 1: Retrieval")
     print("="*80 + "\n")
 
 
 def validate_pdf_path(pdf_path: str) -> Path:
-    """
-    Validate that the PDF file exists.
-    
-    Args:
-        pdf_path: Path to PDF file
-        
-    Returns:
-        Path object
-        
-    Raises:
-        FileNotFoundError: If file doesn't exist
-    """
+    """Validate that the PDF file exists."""
     path = Path(pdf_path)
     if not path.exists():
         raise FileNotFoundError(f"PDF file not found: {pdf_path}")
@@ -43,12 +36,7 @@ def validate_pdf_path(pdf_path: str) -> Path:
 
 
 def process_pdf(pdf_path: str):
-    """
-    Main processing pipeline for PDF Q&A system.
-    
-    Args:
-        pdf_path: Path to the PDF file
-    """
+    """Main processing pipeline for PDF Q&A system."""
     try:
         print_banner()
         
@@ -124,11 +112,12 @@ def process_pdf(pdf_path: str):
 def main():
     """Main entry point."""
     if len(sys.argv) < 2:
-        print("PDF Q&A System - Phase 1 MVP")
+        print("PDF Q&A System - Phase 1: Retrieval")
         print("\nUsage:")
         print(f"  python {sys.argv[0]} <path_to_pdf>")
         print("\nExample:")
-        print(f"  python {sys.argv[0]} document.pdf")
+        print(f"  python {sys.argv[0]} data/sample.pdf")
+        print("\nNote: For RAG with LLM-powered answers, use main_rag.py")
         sys.exit(1)
     
     pdf_path = sys.argv[1]
@@ -137,4 +126,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

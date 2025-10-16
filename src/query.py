@@ -3,9 +3,9 @@ Query Interface Module
 Handles user queries and retrieves relevant chunks from the vector store.
 """
 
-from typing import List, Dict, Tuple
-from embeddings import EmbeddingModel
-from vector_store import VectorStore
+from typing import List, Dict, Tuple, Optional
+from .embed import EmbeddingModel
+from .vector_store import VectorStore
 
 
 class QueryInterface:
