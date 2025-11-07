@@ -11,7 +11,25 @@ A production-ready PDF question-answering system with semantic search and LLM-po
 
 ## Quick Start
 
-### 1. Setup
+### Option 1: Docker (Recommended)
+
+```bash
+# Build the image
+docker build -t pdf-qa-system .
+
+# Run Phase 1 (Semantic Search)
+docker run -it --rm -v $(pwd)/data:/app/data pdf-qa-system python main.py /app/data/sample.pdf
+
+# Run Phase 2 (RAG with LLM) - with API key
+docker run -it --rm -e OPENAI_API_KEY=sk-... -v $(pwd)/data:/app/data pdf-qa-system python main_rag.py /app/data/sample.pdf
+
+# Or use docker-compose
+docker-compose --profile search run --rm pdf-qa-search
+```
+
+### Option 2: Local Python Environment
+
+#### 1. Setup
 
 ```bash
 python3 -m venv venv
@@ -19,7 +37,7 @@ source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 2. Run Phase 1: Semantic Search (No LLM)
+#### 2. Run Phase 1: Semantic Search (No LLM)
 
 ```bash
 python main.py data/sample.pdf
@@ -27,7 +45,7 @@ python main.py data/sample.pdf
 
 Returns relevant text chunks for your questions.
 
-### 3. Run Phase 2: RAG with LLM (Natural Language Answers)
+#### 3. Run Phase 2: RAG with LLM (Natural Language Answers)
 
 ```bash
 python main_rag.py data/sample.pdf
@@ -158,6 +176,60 @@ Edit settings in the respective modules:
 - Python 3.8+
 - 8GB RAM minimum (16GB+ recommended for large models)
 - 10GB disk space (for models)
+
+## Docker Deployment
+
+### Building and Running
+
+```bash
+# Build the image
+docker build -t pdf-qa-system:latest .
+
+# Run with your PDF files
+docker run -it --rm \
+  -v $(pwd)/data:/app/data \
+  pdf-qa-system:latest \
+  python main.py /app/data/your-file.pdf
+```
+
+### Using Docker Compose
+
+```bash
+# Phase 1 (Semantic Search)
+docker-compose --profile search run --rm pdf-qa-search
+
+# Phase 2 (RAG with LLM)
+docker-compose --profile rag run --rm pdf-qa-rag
+
+# With Ollama (local LLM)
+docker-compose --profile ollama up -d ollama
+docker-compose --profile rag run --rm pdf-qa-rag
+```
+
+### Environment Variables
+
+Pass API keys and configuration via environment variables:
+
+```bash
+docker run -it --rm \
+  -e OPENAI_API_KEY=sk-... \
+  -e ANTHROPIC_API_KEY=sk-ant-... \
+  -v $(pwd)/data:/app/data \
+  pdf-qa-system:latest \
+  python main_rag.py /app/data/sample.pdf
+```
+
+### Persistent Storage
+
+Models and embeddings are cached in Docker volumes for faster subsequent runs:
+
+```bash
+# View volumes
+docker volume ls | grep pdf-qa
+
+# Clean up volumes
+docker volume rm pdf-qa-cache pdf-qa-models
+```
 
 ## Architecture
 

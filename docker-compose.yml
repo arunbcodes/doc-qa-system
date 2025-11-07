@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+  # Phase 1: Semantic Search (no LLM)
+  pdf-qa-search:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    image: pdf-qa-system:latest
+    container_name: pdf-qa-search
+    volumes:
+      # Mount your PDF files
+      - ./data:/app/data:ro
+      # Persist embeddings and vector store
+      - pdf-qa-cache:/app/.cache
+      - pdf-qa-models:/app/models
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: python main.py /app/data/sample.pdf
+    profiles:
+      - search
+    stdin_open: true
+    tty: true
+
+  # Phase 2: RAG with LLM (requires LLM setup)
+  pdf-qa-rag:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    image: pdf-qa-system:latest
+    container_name: pdf-qa-rag
+    volumes:
+      - ./data:/app/data:ro
+      - pdf-qa-cache:/app/.cache
+      - pdf-qa-models:/app/models
+    environment:
+      - PYTHONUNBUFFERED=1
+      # Uncomment and set your API keys
+      # - OPENAI_API_KEY=${OPENAI_API_KEY}
+      # - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      # - HF_TOKEN=${HF_TOKEN}
+    command: python main_rag.py /app/data/sample.pdf
+    profiles:
+      - rag
+    stdin_open: true
+    tty: true
+    # Uncomment if using Ollama on host
+    # extra_hosts:
+    #   - "host.docker.internal:host-gateway"
+
+  # Optional: Ollama service (local LLM)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: pdf-qa-ollama
+    volumes:
+      - ollama-models:/root/.ollama
+    ports:
+      - "11434:11434"
+    profiles:
+      - ollama
+    restart: unless-stopped
+    # Uncomment for GPU support
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+volumes:
+  # Persistent storage for models and cache
+  pdf-qa-cache:
+    driver: local
+  pdf-qa-models:
+    driver: local
+  ollama-models:
+    driver: local
+
+networks:
+  default:
+    name: pdf-qa-network
