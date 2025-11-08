@@ -63,11 +63,14 @@ class TestTextChunker:
         # With overlap, should have more chunks
         assert len(chunks) >= 2
 
-    @pytest.mark.parametrize("chunk_size,chunk_overlap", [
-        (100, 20),
-        (500, 50),
-        (1000, 100),
-    ])
+    @pytest.mark.parametrize(
+        "chunk_size,chunk_overlap",
+        [
+            (100, 20),
+            (500, 50),
+            (1000, 100),
+        ],
+    )
     def test_various_chunk_sizes(self, sample_text, chunk_size, chunk_overlap):
         """Test chunking with various chunk sizes."""
         chunker = TextChunker(chunk_size=chunk_size, chunk_overlap=chunk_overlap)

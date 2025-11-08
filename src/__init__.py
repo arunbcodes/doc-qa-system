@@ -15,7 +15,7 @@ from .llm_providers import (
     HuggingFaceLLM,
     LocalServerLLM,
     MockLLM,
-    get_available_llm
+    get_available_llm,
 )
 from .rag import RAGInterface
 
@@ -36,4 +36,3 @@ __all__ = [
     "get_available_llm",
     "RAGInterface",
 ]
-
