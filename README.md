@@ -9,6 +9,32 @@ A production-ready PDF question-answering system with semantic search and LLM-po
 - **Local-First** - Run completely offline with local models
 - **Clean Architecture** - Modular, testable, production-ready code
 
+## Installation
+
+### Option 1: Install as Package (Recommended)
+
+```bash
+# Install from source
+pip install -e .
+
+# Or with all dependencies (LLM providers + dev tools)
+pip install -e ".[all]"
+
+# Or install only what you need
+pip install -e ".[llm]"  # LLM providers only
+pip install -e ".[dev]"  # Development tools only
+```
+
+### Option 2: Install Dependencies Only
+
+```bash
+pip install -r requirements.txt
+```
+
+### Option 3: Docker
+
+See [Docker Deployment](#docker-deployment) section below.
+
 ## Quick Start
 
 ### Option 1: Docker (Recommended)
@@ -165,11 +191,54 @@ print(result['answer'])
 
 ## Configuration
 
+### Environment Variables
+
+Copy `.env.example` to `.env` and configure:
+
+```bash
+cp .env.example .env
+# Edit .env with your API keys and settings
+```
+
+Key configuration options:
+- `OPENAI_API_KEY` - OpenAI API key
+- `ANTHROPIC_API_KEY` - Anthropic API key
+- `OLLAMA_BASE_URL` - Ollama server URL (default: http://localhost:11434)
+- `CHUNK_SIZE` - Text chunk size (default: 500)
+- `CHUNK_OVERLAP` - Chunk overlap (default: 50)
+
+### Code Configuration
+
 Edit settings in the respective modules:
 
 - **Chunk size**: `src/chunk.py` → `TextChunker(chunk_size=500)`
 - **Number of results**: `src/query.py` → `QueryInterface(n_results=3)`
 - **Embedding model**: `src/embed.py` → `EmbeddingModel(model_name="...")`
+
+## Testing
+
+Run the test suite with pytest:
+
+```bash
+# Install dev dependencies
+pip install -e ".[dev]"
+
+# Run all tests
+pytest
+
+# Run with coverage report
+pytest --cov=src --cov-report=html
+
+# Run specific test files
+pytest tests/test_chunk.py
+pytest tests/test_embed.py
+
+# Run only fast tests (skip slow tests)
+pytest -m "not slow"
+
+# Run only unit tests
+pytest -m unit
+```
 
 ## Requirements
 

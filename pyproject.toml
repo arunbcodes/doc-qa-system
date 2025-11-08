@@ -1,0 +1,185 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pdf-qa-system"
+version = "2.0.0"
+description = "A production-ready PDF question-answering system with semantic search and LLM-powered RAG"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "Arun Balakrishnan", email = "arun.balakrishnan@yahooinc.com"}
+]
+keywords = [
+    "pdf",
+    "question-answering",
+    "rag",
+    "llm",
+    "semantic-search",
+    "embeddings",
+    "nlp",
+    "document-processing"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Text Processing :: Indexing",
+]
+
+# Core dependencies
+dependencies = [
+    "docling>=1.0.0",
+    "langchain-text-splitters>=0.2.0",
+    "sentence-transformers>=2.2.0",
+    "torch>=2.0.0",
+    "chromadb>=0.4.0",
+    "numpy>=1.24.0",
+]
+
+[project.optional-dependencies]
+# LLM provider dependencies
+llm = [
+    "openai>=1.0.0",
+    "anthropic>=0.18.0",
+    "transformers>=4.30.0",
+    "requests>=2.31.0",
+]
+
+# Development dependencies
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "mypy>=1.4.0",
+    "isort>=5.12.0",
+    "pre-commit>=3.3.0",
+]
+
+# Full installation with all dependencies
+all = [
+    "pdf-qa-system[llm,dev]",
+]
+
+[project.urls]
+Homepage = "https://github.com/arunbcodes/doc-qa-system"
+Repository = "https://github.com/arunbcodes/doc-qa-system"
+Issues = "https://github.com/arunbcodes/doc-qa-system/issues"
+
+[project.scripts]
+# CLI entry points
+pdf-qa = "src.query:main"
+pdf-qa-rag = "src.main_rag:main"
+
+[tool.setuptools]
+packages = ["src"]
+
+[tool.setuptools.package-data]
+src = ["py.typed"]
+
+# Black configuration
+[tool.black]
+line-length = 100
+target-version = ["py38", "py39", "py310", "py311"]
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+# isort configuration
+[tool.isort]
+profile = "black"
+line_length = 100
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+
+# mypy configuration
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+strict_optional = true
+
+[[tool.mypy.overrides]]
+module = [
+    "docling.*",
+    "chromadb.*",
+    "sentence_transformers.*",
+    "langchain_text_splitters.*",
+]
+ignore_missing_imports = true
+
+# pytest configuration
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = [
+    "-ra",
+    "-q",
+    "--strict-markers",
+    "--strict-config",
+    "--cov=src",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-report=xml",
+]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+]
+
+# Coverage configuration
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "*/tests/*",
+    "*/test_*.py",
+    "*/__pycache__/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
