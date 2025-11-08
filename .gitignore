@@ -39,3 +39,8 @@ Thumbs.db
 chroma_db/
 *.log
 
+# Test coverage
+.coverage
+coverage.xml
+htmlcov/
+

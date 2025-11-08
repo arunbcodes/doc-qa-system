@@ -12,6 +12,7 @@ from .chunk import TextChunker
 from .embed import EmbeddingModel
 from .vector_store import VectorStore
 from .rag import RAGInterface
+from .pdf_processor import PDFProcessor
 from .llm_providers import (
     OpenAILLM,
     AnthropicLLM,
@@ -92,59 +93,66 @@ def select_llm_provider():
         return MockLLM()
 
 
-def process_pdf_with_rag(pdf_path: str, llm=None):
+def process_pdf_with_rag(pdf_paths, llm=None):
     """
-    Process PDF and start RAG Q&A session.
+    Process single or multiple PDFs and start RAG Q&A session.
 
     Args:
-        pdf_path: Path to PDF file
+        pdf_paths: Single PDF path (str) or list of PDF paths
         llm: LLM instance (auto-detects if None)
     """
     try:
         print_banner()
 
-        # Validate PDF
-        pdf_file = Path(pdf_path)
-        if not pdf_file.exists():
-            raise FileNotFoundError(f"PDF not found: {pdf_path}")
+        # Convert single path to list for uniform processing
+        if isinstance(pdf_paths, str):
+            pdf_paths = [pdf_paths]
 
-        print(f"📄 Processing: {pdf_file.name}\n")
+        # Validate PDFs exist
+        for pdf_path in pdf_paths:
+            pdf_file = Path(pdf_path)
+            if not pdf_file.exists():
+                raise FileNotFoundError(f"PDF not found: {pdf_path}")
 
-        # Step 1: Parse PDF
-        print("Step 1/5: Extracting text from PDF...")
-        parser = PDFParser()
-        text = parser.extract_text(str(pdf_file))
-        print(f"✓ Extracted {len(text)} characters\n")
+        # Display what we're processing
+        if len(pdf_paths) == 1:
+            print(f"📄 Processing: {Path(pdf_paths[0]).name}\n")
+        else:
+            print(f"📄 Processing {len(pdf_paths)} PDF files:\n")
+            for i, path in enumerate(pdf_paths, 1):
+                print(f"  {i}. {Path(path).name}")
+            print()
 
-        # Step 2: Chunk text
-        print("Step 2/5: Chunking text...")
-        chunker = TextChunker(chunk_size=500, chunk_overlap=50)
-        chunks = chunker.chunk_text(text)
-        print(f"✓ Created {len(chunks)} chunks\n")
-
-        # Step 3: Load embedding model
-        print("Step 3/5: Loading embedding model...")
+        # Step 1: Load embedding model
+        print("Step 1/3: Loading embedding model...")
         embedding_model = EmbeddingModel()
         print("✓ Embedding model ready\n")
 
-        # Step 4: Generate embeddings
-        print("Step 4/5: Generating embeddings...")
-        embeddings = embedding_model.embed_batch(chunks, show_progress=True)
-        print(f"✓ Generated {len(embeddings)} embeddings\n")
-
-        # Step 5: Store in vector DB
-        print("Step 5/5: Storing in vector database...")
+        # Step 2: Initialize vector store
+        print("Step 2/3: Initializing vector database...")
         vector_store = VectorStore()
-        vector_store.add_chunks(chunks, embeddings)
-        print(f"✓ Stored {vector_store.get_count()} chunks\n")
+        print("✓ Vector database ready\n")
+
+        # Step 3: Process PDF(s)
+        print("Step 3/3: Processing PDF(s)...")
+        processor = PDFProcessor(embedding_model=embedding_model, chunk_size=500, chunk_overlap=50)
+        stats = processor.process_and_store(pdf_paths, vector_store, show_progress=True)
+        print(f"\n✓ Processed {stats['total_pdfs']} PDF(s)\n")
 
         # Summary
         print("=" * 80)
         print("✅ PDF Processing Complete!")
         print("=" * 80)
-        print(f"Document: {pdf_file.name}")
-        print(f"Chunks: {len(chunks)}")
+        if len(pdf_paths) == 1:
+            print(f"Document: {Path(pdf_paths[0]).name}")
+        else:
+            print(f"Documents: {len(pdf_paths)} PDFs")
+        print(f"Total Chunks: {stats['total_chunks']}")
         print(f"Vector DB: {vector_store.get_count()} embeddings stored")
+        if len(pdf_paths) > 1:
+            print("\nPer-PDF Statistics:")
+            for pdf_stat in stats["per_pdf_stats"]:
+                print(f"  • {pdf_stat['pdf_name']}: {pdf_stat['num_chunks']} chunks")
         print("=" * 80)
 
         # Select LLM if not provided
@@ -170,29 +178,31 @@ def process_pdf_with_rag(pdf_path: str, llm=None):
         sys.exit(1)
 
 
-def demo_mode(pdf_path: str, llm=None):
+def demo_mode(pdf_paths, llm=None):
     """
     Demo mode: Shows one example question/answer without interactive loop.
     Useful for testing!
+
+    Args:
+        pdf_paths: Single PDF path (str) or list of PDF paths
+        llm: LLM instance (auto-detects if None)
     """
     print_banner()
     print("🎬 DEMO MODE - Testing RAG System\n")
 
-    # Process PDF
-    pdf_file = Path(pdf_path)
-    parser = PDFParser()
-    chunker = TextChunker()
+    # Convert single path to list
+    if isinstance(pdf_paths, str):
+        pdf_paths = [pdf_paths]
+
+    # Process PDF(s)
     embedding_model = EmbeddingModel()
-
-    print("Processing PDF...")
-    text = parser.extract_text(str(pdf_file))
-    chunks = chunker.chunk_text(text)
-    embeddings = embedding_model.embed_batch(chunks, show_progress=False)
-
     vector_store = VectorStore()
-    vector_store.add_chunks(chunks, embeddings)
+    processor = PDFProcessor(embedding_model=embedding_model)
 
-    print(f"✓ Processed {len(chunks)} chunks\n")
+    print(f"Processing {len(pdf_paths)} PDF(s)...")
+    stats = processor.process_and_store(pdf_paths, vector_store, show_progress=False)
+
+    print(f"✓ Processed {stats['total_chunks']} chunks from {stats['total_pdfs']} PDF(s)\n")
 
     # Get LLM
     if llm is None:
@@ -229,10 +239,12 @@ def main():
     if len(sys.argv) < 2:
         print("PDF Q&A System with RAG - Phase 2")
         print("\nUsage:")
-        print(f"  python {sys.argv[0]} <pdf_file> [--demo]")
+        print(f"  python {sys.argv[0]} <pdf_file> [pdf_file2 ...] [--demo]")
         print("\nExamples:")
         print(f"  python {sys.argv[0]} document.pdf")
+        print(f"  python {sys.argv[0]} doc1.pdf doc2.pdf doc3.pdf")
         print(f"  python {sys.argv[0]} document.pdf --demo")
+        print(f"  python {sys.argv[0]} doc1.pdf doc2.pdf --demo")
         print("\nEnvironment Variables:")
         print("  OPENAI_API_KEY     - For OpenAI models")
         print("  ANTHROPIC_API_KEY  - For Anthropic Claude")
@@ -241,13 +253,22 @@ def main():
         print("  - Or use HuggingFace models (auto-downloads)")
         sys.exit(1)
 
-    pdf_path = sys.argv[1]
+    # Parse arguments
     demo = "--demo" in sys.argv
+    pdf_paths = [arg for arg in sys.argv[1:] if arg != "--demo"]
+
+    if not pdf_paths:
+        print("Error: No PDF files specified")
+        sys.exit(1)
+
+    # Handle single path vs multiple paths
+    if len(pdf_paths) == 1:
+        pdf_paths = pdf_paths[0]
 
     if demo:
-        demo_mode(pdf_path)
+        demo_mode(pdf_paths)
     else:
-        process_pdf_with_rag(pdf_path)
+        process_pdf_with_rag(pdf_paths)
 
 
 if __name__ == "__main__":

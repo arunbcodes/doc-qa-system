@@ -10,6 +10,7 @@ A production-ready PDF question-answering system with semantic search and LLM-po
 
 ## Features
 
+- **Multi-PDF Support** - Process and query multiple PDF documents simultaneously
 - **Semantic Search** - Find relevant content by meaning, not keywords
 - **Model-Agnostic RAG** - Works with 6+ LLM providers (OpenAI, Ollama, Claude, etc.)
 - **Local-First** - Run completely offline with local models
@@ -79,11 +80,17 @@ Returns relevant text chunks for your questions.
 
 #### 3. Run Phase 2: RAG with LLM (Natural Language Answers)
 
+**Single PDF:**
 ```bash
 python main_rag.py data/sample.pdf
 ```
 
-Generates natural language answers using an LLM.
+**Multiple PDFs:**
+```bash
+python main_rag.py data/doc1.pdf data/doc2.pdf data/doc3.pdf
+```
+
+Generates natural language answers using an LLM. When multiple PDFs are provided, the system combines all documents into a unified knowledge base for querying.
 
 ## LLM Options
 
@@ -169,8 +176,31 @@ $ python main_rag.py data/sample.pdf
 | HuggingFace | Free | 100% Local | Auto-downloads |
 | Local Server | Free | 100% Local | Start vLLM/text-gen-webui |
 
+## Multi-PDF Usage
+
+Process and query multiple PDF documents simultaneously:
+
+```bash
+# Process multiple PDFs
+python main_rag.py report1.pdf report2.pdf report3.pdf
+
+# With demo mode
+python main_rag.py doc1.pdf doc2.pdf --demo
+
+# Interactive mode - queries all documents
+❓ Question: What are the common themes across all documents?
+💡 ANSWER: [Analyzes content from all PDFs]
+```
+
+The system automatically:
+- Processes all PDFs with source tracking metadata
+- Combines chunks into a unified vector database
+- Attributes answers to specific source documents
+- Maintains separate statistics per PDF
+
 ## Using as a Library
 
+**Single PDF:**
 ```python
 from src import PDFParser, TextChunker, EmbeddingModel, VectorStore, RAGInterface
 
@@ -193,6 +223,33 @@ from src import get_available_llm
 rag = RAGInterface(embedder, store, llm=get_available_llm())
 result = rag.answer_question("What is this about?")
 print(result['answer'])
+```
+
+**Multiple PDFs:**
+```python
+from src import PDFProcessor, EmbeddingModel, VectorStore, RAGInterface, get_available_llm
+
+# Initialize components
+embedding_model = EmbeddingModel()
+vector_store = VectorStore()
+processor = PDFProcessor(embedding_model=embedding_model)
+
+# Process multiple PDFs
+pdf_paths = ["report1.pdf", "report2.pdf", "report3.pdf"]
+stats = processor.process_and_store(pdf_paths, vector_store, show_progress=True)
+
+print(f"Processed {stats['total_pdfs']} PDFs")
+print(f"Total chunks: {stats['total_chunks']}")
+
+# Query across all documents
+rag = RAGInterface(embedding_model, vector_store, llm=get_available_llm())
+result = rag.answer_question("What are the common themes?")
+print(result['answer'])
+
+# View source information in retrieved context
+result_with_context = rag.answer_question("Summarize key points", show_context=True)
+for chunk in result_with_context['context']:
+    print(f"From {chunk['metadata']['source']}: {chunk['text'][:100]}...")
 ```
 
 ## Configuration
