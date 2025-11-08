@@ -307,4 +307,4 @@ docker run --add-host=host.docker.internal:host-gateway ...
 
 - [Production Deployment Guide](production.md)
 - [Environment Variables](environment.md)
-- [Monitoring and Logging](../development/monitoring.md)
+- [Troubleshooting](../user-guide/troubleshooting.md)

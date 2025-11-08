@@ -7,6 +7,7 @@ from typing import List, Dict, Optional
 import chromadb
 from chromadb.config import Settings
 import uuid
+import numpy as np
 
 
 class VectorStore:
@@ -63,7 +64,7 @@ class VectorStore:
             metadatas=metadatas if metadatas else [{"chunk_index": i} for i in range(len(chunks))]
         )
     
-    def search(self, query_embedding, n_results: int = 5) -> Dict:
+    def search(self, query_embedding: np.ndarray, n_results: int = 5) -> Dict:
         """
         Search for similar chunks using query embedding.
         
