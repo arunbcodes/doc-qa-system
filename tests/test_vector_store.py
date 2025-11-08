@@ -38,8 +38,8 @@ class TestVectorStore:
         query_embedding = mock_embeddings[0]
         results = vector_store.search(query_embedding, n_results=3)
 
-        assert len(results) <= 3
-        assert len(results) > 0
+        assert len(results['documents'][0]) <= 3
+        assert len(results['documents'][0]) > 0
 
     def test_add_chunks_with_metadata(self, vector_store):
         """Test adding chunks with metadata."""
@@ -51,7 +51,7 @@ class TestVectorStore:
 
         # Query and verify metadata
         results = vector_store.search(embeddings[0], n_results=2)
-        assert len(results) > 0
+        assert len(results['documents'][0]) > 0
 
     def test_query_returns_top_results(self, vector_store, sample_chunks, mock_embeddings):
         """Test that query returns top N results."""
@@ -60,15 +60,15 @@ class TestVectorStore:
         query_embedding = np.random.rand(384).tolist()
         results = vector_store.search(query_embedding, n_results=2)
 
-        assert len(results) <= 2
+        assert len(results['documents'][0]) <= 2
 
     def test_query_empty_store(self, vector_store):
         """Test querying an empty vector store."""
         query_embedding = np.random.rand(384).tolist()
         results = vector_store.search(query_embedding, n_results=3)
 
-        assert isinstance(results, list)
-        assert len(results) == 0
+        assert isinstance(results, dict)
+        assert len(results['documents'][0]) == 0
 
     def test_add_empty_chunks(self, vector_store):
         """Test adding empty chunks list."""
@@ -77,7 +77,7 @@ class TestVectorStore:
         # Should not raise error
         query_embedding = np.random.rand(384).tolist()
         results = vector_store.search(query_embedding, n_results=1)
-        assert len(results) == 0
+        assert len(results['documents'][0]) == 0
 
     def test_query_with_various_n_results(
         self, vector_store, sample_chunks, mock_embeddings
@@ -88,7 +88,7 @@ class TestVectorStore:
 
         for n in [1, 3, 5, 10]:
             results = vector_store.search(query_embedding, n_results=n)
-            assert len(results) <= min(n, len(sample_chunks))
+            assert len(results['documents'][0]) <= min(n, len(sample_chunks))
 
     def test_collection_persistence(self, temp_dir):
         """Test that collection can be persisted."""
@@ -109,8 +109,8 @@ class TestVectorStore:
         )
 
         # Should be able to query data
-        results = store2.query(embeddings[0], n_results=1)
-        assert len(results) > 0
+        results = store2.search(embeddings[0], n_results=1)
+        assert len(results['documents'][0]) > 0
 
     @pytest.mark.parametrize("n_chunks", [1, 5, 10, 50])
     def test_add_various_chunk_counts(self, vector_store, n_chunks):
@@ -121,4 +121,4 @@ class TestVectorStore:
         vector_store.add_chunks(chunks, embeddings)
 
         results = vector_store.search(embeddings[0], n_results=min(n_chunks, 3))
-        assert len(results) > 0
+        assert len(results['documents'][0]) > 0
