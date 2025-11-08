@@ -1,0 +1,111 @@
+site_name: PDF Q&A System Documentation
+site_description: A production-ready PDF question-answering system with semantic search and LLM-powered RAG
+site_author: Arun Balakrishnan
+site_url: https://arunbcodes.github.io/doc-qa-system/
+
+repo_name: arunbcodes/doc-qa-system
+repo_url: https://github.com/arunbcodes/doc-qa-system
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    # Light mode
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+  icon:
+    repo: fontawesome/brands/github
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: google
+            show_source: true
+            show_root_heading: true
+            show_root_full_path: false
+            members_order: source
+            separate_signature: true
+            show_signature_annotations: true
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - admonition
+  - pymdownx.details
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: getting-started/installation.md
+      - Quick Start: getting-started/quickstart.md
+      - Basic Usage: getting-started/basic-usage.md
+  - User Guide:
+      - Configuration: user-guide/configuration.md
+      - LLM Providers: user-guide/llm-providers.md
+      - Docker Usage: user-guide/docker.md
+      - Troubleshooting: user-guide/troubleshooting.md
+  - API Reference:
+      - Overview: api/overview.md
+      - PDF Parser: api/extract.md
+      - Text Chunker: api/chunk.md
+      - Embeddings: api/embed.md
+      - Vector Store: api/vector-store.md
+      - LLM Providers: api/llm-providers.md
+      - RAG Interface: api/rag.md
+  - Deployment:
+      - Docker: deployment/docker.md
+      - Production: deployment/production.md
+      - Environment Variables: deployment/environment.md
+  - Development:
+      - Contributing: development/contributing.md
+      - Testing: development/testing.md
+      - Code Style: development/code-style.md
+      - Architecture: ARCHITECTURE.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/arunbcodes/doc-qa-system
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/pdf-qa-system/
+
+copyright: Copyright &copy; 2025 Arun Balakrishnan

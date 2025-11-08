@@ -67,9 +67,17 @@ dev = [
     "pre-commit>=3.3.0",
 ]
 
+# Documentation dependencies
+docs = [
+    "mkdocs>=1.5.0",
+    "mkdocs-material>=9.4.0",
+    "mkdocstrings[python]>=0.24.0",
+    "pymdown-extensions>=10.0",
+]
+
 # Full installation with all dependencies
 all = [
-    "pdf-qa-system[llm,dev]",
+    "pdf-qa-system[llm,dev,docs]",
 ]
 
 [project.urls]
