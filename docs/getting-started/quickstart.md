@@ -67,8 +67,11 @@ Get natural language answers powered by LLMs.
     # Pull a model
     ollama pull llama3.2
 
-    # Run the system (auto-detects Ollama)
+    # Run with single PDF
     python main_rag.py data/your-document.pdf
+
+    # Run with multiple PDFs
+    python main_rag.py data/doc1.pdf data/doc2.pdf data/doc3.pdf
     ```
 
 === "OpenAI"
@@ -76,8 +79,11 @@ Get natural language answers powered by LLMs.
     # Set API key
     export OPENAI_API_KEY="sk-..."
 
-    # Run with OpenAI
+    # Run with single PDF
     python main_rag.py data/your-document.pdf
+
+    # Run with multiple PDFs
+    python main_rag.py data/report1.pdf data/report2.pdf
     ```
 
 === "Anthropic (Claude)"

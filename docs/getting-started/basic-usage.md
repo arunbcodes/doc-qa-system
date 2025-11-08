@@ -23,8 +23,14 @@ python main.py data/research-paper.pdf
 
 ### Phase 2: RAG with LLM
 
+**Single PDF:**
 ```bash
 python main_rag.py <pdf_file>
+```
+
+**Multiple PDFs:**
+```bash
+python main_rag.py <pdf_file1> <pdf_file2> [pdf_file3 ...]
 ```
 
 **Features:**
@@ -32,15 +38,19 @@ python main_rag.py <pdf_file>
 - Multiple LLM support
 - Context-aware responses
 - Source attribution
+- **Multi-PDF support**: Query across multiple documents simultaneously
 
-**Example:**
+**Examples:**
 ```bash
-# With environment variable
+# Single PDF with environment variable
 export OPENAI_API_KEY="sk-..."
 python main_rag.py data/research-paper.pdf
 
-# Or inline
-OPENAI_API_KEY="sk-..." python main_rag.py data/research-paper.pdf
+# Multiple PDFs
+python main_rag.py data/report1.pdf data/report2.pdf data/report3.pdf
+
+# Multiple PDFs with inline API key
+OPENAI_API_KEY="sk-..." python main_rag.py data/doc1.pdf data/doc2.pdf
 ```
 
 ## Interactive Mode
@@ -129,10 +139,43 @@ results = store.query(query_embedding, n_results=5)
 
 ## Working with Multiple Documents
 
-### Processing Multiple PDFs
+### Using PDFProcessor (Recommended)
+
+The `PDFProcessor` class provides a streamlined way to process multiple PDFs:
 
 ```python
-import os
+from src import PDFProcessor, EmbeddingModel, VectorStore, RAGInterface, get_available_llm
+
+# Initialize components
+embedding_model = EmbeddingModel()
+vector_store = VectorStore(collection_name="all_docs")
+processor = PDFProcessor(embedding_model=embedding_model)
+
+# Process multiple PDFs
+pdf_paths = ["data/report1.pdf", "data/report2.pdf", "data/report3.pdf"]
+stats = processor.process_and_store(pdf_paths, vector_store, show_progress=True)
+
+print(f"Processed {stats['total_pdfs']} PDFs")
+print(f"Total chunks: {stats['total_chunks']}")
+
+# Query across all documents
+rag = RAGInterface(embedding_model, vector_store, llm=get_available_llm())
+result = rag.answer_question("What are the common themes across all reports?")
+print(result['answer'])
+
+# View source information
+result_with_context = rag.answer_question("Summarize key points", show_context=True)
+for chunk in result_with_context['context']:
+    source = chunk['metadata']['source']
+    text_preview = chunk['text'][:100]
+    print(f"From {source}: {text_preview}...")
+```
+
+### Manual Processing (Advanced)
+
+For fine-grained control, process PDFs manually:
+
+```python
 from pathlib import Path
 
 pdf_dir = Path("data/")
@@ -152,15 +195,18 @@ for pdf_file in pdf_dir.glob("*.pdf"):
 print("All documents processed!")
 ```
 
-### Querying with Filters
+### Viewing Source Metadata
+
+All chunks include source tracking metadata:
 
 ```python
-# Query specific document
-results = store.query(
-    query_embedding,
-    n_results=3,
-    where={"source": "report-2024.pdf"}
-)
+# Get results with context
+result = rag.answer_question("What is the policy?", show_context=True)
+
+# Check which PDFs the answer came from
+for chunk in result['context']:
+    print(f"Source: {chunk['metadata']['source']}")
+    print(f"Text: {chunk['text'][:200]}...")
 ```
 
 ## Advanced Usage

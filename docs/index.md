@@ -11,6 +11,7 @@ Welcome to the **PDF Q&A System** documentation! This system provides production
 
 The PDF Q&A System allows you to:
 
+- 📚 **Process multiple PDFs** simultaneously with source tracking
 - 📄 **Extract text from PDFs** with high accuracy
 - 🔍 **Search semantically** using meaning, not just keywords
 - 🤖 **Generate answers** using multiple LLM providers
