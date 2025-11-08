@@ -18,7 +18,8 @@ class TestMockLLM:
     def test_mock_llm_initialization(self):
         """Test MockLLM initialization."""
         llm = MockLLM()
-        assert llm.model_name == "mock"
+        assert llm is not None
+        assert llm.is_available()
 
     def test_mock_llm_generate(self):
         """Test MockLLM text generation."""
@@ -47,7 +48,7 @@ class TestOpenAILLM:
         # Should not raise error, but won't work for actual generation
         try:
             llm = OpenAILLM()
-            assert llm.model_name == "gpt-3.5-turbo"
+            assert llm.model == "gpt-3.5-turbo"
         except Exception as e:
             # Expected if openai library not installed
             assert "openai" in str(e).lower()
@@ -55,8 +56,8 @@ class TestOpenAILLM:
     def test_openai_with_custom_model(self):
         """Test OpenAILLM with custom model name."""
         try:
-            llm = OpenAILLM(model_name="gpt-4")
-            assert llm.model_name == "gpt-4"
+            llm = OpenAILLM(model="gpt-4")
+            assert llm.model == "gpt-4"
         except Exception:
             pytest.skip("OpenAI library not available")
 
@@ -68,7 +69,7 @@ class TestAnthropicLLM:
         """Test AnthropicLLM initialization without API key."""
         try:
             llm = AnthropicLLM()
-            assert llm.model_name == "claude-3-sonnet-20240229"
+            assert llm.model == "claude-3-sonnet-20240229"
         except Exception as e:
             # Expected if anthropic library not installed
             assert "anthropic" in str(e).lower()
@@ -76,8 +77,8 @@ class TestAnthropicLLM:
     def test_anthropic_with_custom_model(self):
         """Test AnthropicLLM with custom model name."""
         try:
-            llm = AnthropicLLM(model_name="claude-3-opus-20240229")
-            assert llm.model_name == "claude-3-opus-20240229"
+            llm = AnthropicLLM(model="claude-3-opus-20240229")
+            assert llm.model == "claude-3-opus-20240229"
         except Exception:
             pytest.skip("Anthropic library not available")
 
@@ -88,7 +89,7 @@ class TestOllamaLLM:
     def test_ollama_initialization(self):
         """Test OllamaLLM initialization."""
         llm = OllamaLLM()
-        assert llm.model_name == "llama3.2"
+        assert llm.model == "llama3.2"
         assert llm.base_url == "http://localhost:11434"
 
     def test_ollama_custom_url(self):
@@ -99,8 +100,8 @@ class TestOllamaLLM:
 
     def test_ollama_custom_model(self):
         """Test OllamaLLM with custom model name."""
-        llm = OllamaLLM(model_name="mistral")
-        assert llm.model_name == "mistral"
+        llm = OllamaLLM(model="mistral")
+        assert llm.model == "mistral"
 
 
 class TestGetAvailableLLM:

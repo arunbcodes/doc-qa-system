@@ -18,23 +18,21 @@ class TestEmbeddingModel:
         """Test EmbeddingModel initialization."""
         assert embedder.model_name == "all-MiniLM-L6-v2"
         assert embedder.model is not None
-        assert embedder.dimension == 384
+        assert embedder.get_embedding_dimension() == 384
 
     def test_embed_single_text(self, embedder):
         """Test embedding a single text."""
         text = "This is a test sentence."
-        embedding = embedder.embed(text)
+        embedding = embedder.embed_text(text)
 
         assert isinstance(embedding, (list, np.ndarray))
         assert len(embedding) == 384
         assert all(isinstance(x, (float, np.floating)) for x in embedding)
 
     def test_embed_empty_text(self, embedder):
-        """Test embedding empty text."""
-        embedding = embedder.embed("")
-
-        assert isinstance(embedding, (list, np.ndarray))
-        assert len(embedding) == 384
+        """Test embedding empty text raises ValueError."""
+        with pytest.raises(ValueError, match="Cannot embed empty text"):
+            embedder.embed_text("")
 
     def test_embed_batch(self, embedder, sample_chunks):
         """Test embedding multiple texts in batch."""
@@ -54,8 +52,8 @@ class TestEmbeddingModel:
     def test_embed_consistency(self, embedder):
         """Test that same text produces consistent embeddings."""
         text = "Consistency test"
-        embedding1 = embedder.embed(text)
-        embedding2 = embedder.embed(text)
+        embedding1 = embedder.embed_text(text)
+        embedding2 = embedder.embed_text(text)
 
         embedding1_array = np.array(embedding1)
         embedding2_array = np.array(embedding2)
@@ -71,8 +69,8 @@ class TestEmbeddingModel:
         text1 = "Machine learning is fascinating"
         text2 = "The weather is sunny today"
 
-        embedding1 = embedder.embed(text1)
-        embedding2 = embedder.embed(text2)
+        embedding1 = embedder.embed_text(text1)
+        embedding2 = embedder.embed_text(text2)
 
         embedding1_array = np.array(embedding1)
         embedding2_array = np.array(embedding2)
@@ -86,7 +84,7 @@ class TestEmbeddingModel:
     def test_embedding_normalized(self, embedder):
         """Test that embeddings are properly normalized."""
         text = "Normalization test"
-        embedding = embedder.embed(text)
+        embedding = embedder.embed_text(text)
         embedding_array = np.array(embedding)
 
         norm = np.linalg.norm(embedding_array)
