@@ -12,7 +12,10 @@ class TestVectorStore:
     @pytest.fixture
     def vector_store(self):
         """Create a fresh vector store instance for each test."""
-        return VectorStore(collection_name="test_collection")
+        store = VectorStore(collection_name="test_collection")
+        # Clear any existing data from previous tests
+        store.clear()
+        return store
 
     def test_vector_store_initialization(self, vector_store):
         """Test VectorStore initialization."""
