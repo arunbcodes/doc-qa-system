@@ -1,5 +1,6 @@
 """Unit tests for vector store module."""
 
+import sys
 import pytest
 import numpy as np
 
@@ -93,6 +94,7 @@ class TestVectorStore:
             results = vector_store.search(query_embedding, n_results=n)
             assert len(results['documents'][0]) <= min(n, len(sample_chunks))
 
+    @pytest.mark.skipif(sys.platform == "win32", reason="Windows file locking issue with ChromaDB cleanup")
     def test_collection_persistence(self, temp_dir):
         """Test that collection can be persisted."""
         persist_dir = str(temp_dir / "chroma_test")
