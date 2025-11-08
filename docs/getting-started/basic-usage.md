@@ -1,0 +1,263 @@
+# Basic Usage
+
+Complete guide to using the PDF Q&A System.
+
+## Command-Line Interface
+
+### Phase 1: Semantic Search
+
+```bash
+python main.py <pdf_file>
+```
+
+**Features:**
+- No LLM required
+- Fast retrieval
+- Privacy-preserving
+- Returns text chunks with similarity scores
+
+**Example:**
+```bash
+python main.py data/research-paper.pdf
+```
+
+### Phase 2: RAG with LLM
+
+```bash
+python main_rag.py <pdf_file>
+```
+
+**Features:**
+- Natural language answers
+- Multiple LLM support
+- Context-aware responses
+- Source attribution
+
+**Example:**
+```bash
+# With environment variable
+export OPENAI_API_KEY="sk-..."
+python main_rag.py data/research-paper.pdf
+
+# Or inline
+OPENAI_API_KEY="sk-..." python main_rag.py data/research-paper.pdf
+```
+
+## Interactive Mode
+
+Both scripts run in interactive mode by default:
+
+```
+❓ Enter your question (or 'quit' to exit): What is the methodology?
+
+💡 Answer:
+The methodology involves...
+
+❓ Enter your question (or 'quit' to exit): quit
+👋 Goodbye!
+```
+
+**Commands:**
+- Type your question and press Enter
+- Type `quit` or `exit` to stop
+- Press Ctrl+C to interrupt
+
+## Python API
+
+### Basic Example
+
+```python
+from src import PDFParser, TextChunker, EmbeddingModel, VectorStore
+
+# Process PDF
+parser = PDFParser()
+text = parser.extract_text("document.pdf")
+
+# Chunk and embed
+chunker = TextChunker()
+chunks = chunker.chunk_text(text)
+
+embedder = EmbeddingModel()
+embeddings = embedder.embed_batch(chunks)
+
+# Store
+store = VectorStore()
+store.add_chunks(chunks, embeddings)
+
+# Query
+query_embedding = embedder.embed("What is this about?")
+results = store.query(query_embedding, n_results=3)
+
+for i, result in enumerate(results, 1):
+    print(f"[{i}] {result}")
+```
+
+### RAG Example
+
+```python
+from src import RAGInterface, get_available_llm
+
+# Initialize RAG
+llm = get_available_llm()
+rag = RAGInterface(embedder, store, llm)
+
+# Ask question
+result = rag.answer_question("What are the key findings?")
+
+print(f"Answer: {result['answer']}")
+print(f"Context used: {len(result['context'])} chunks")
+```
+
+### Custom Configuration
+
+```python
+# Custom chunk size
+chunker = TextChunker(chunk_size=1000, chunk_overlap=100)
+
+# Custom embedding model
+embedder = EmbeddingModel(model_name="all-mpnet-base-v2")
+
+# Persistent vector store
+store = VectorStore(
+    collection_name="my_collection",
+    persist_directory="./my_db"
+)
+
+# Custom number of results
+results = store.query(query_embedding, n_results=5)
+```
+
+## Working with Multiple Documents
+
+### Processing Multiple PDFs
+
+```python
+import os
+from pathlib import Path
+
+pdf_dir = Path("data/")
+store = VectorStore(collection_name="all_docs")
+
+for pdf_file in pdf_dir.glob("*.pdf"):
+    print(f"Processing {pdf_file.name}...")
+
+    text = parser.extract_text(str(pdf_file))
+    chunks = chunker.chunk_text(text)
+    embeddings = embedder.embed_batch(chunks)
+
+    # Add metadata
+    metadatas = [{"source": pdf_file.name} for _ in chunks]
+    store.add_chunks(chunks, embeddings, metadatas=metadatas)
+
+print("All documents processed!")
+```
+
+### Querying with Filters
+
+```python
+# Query specific document
+results = store.query(
+    query_embedding,
+    n_results=3,
+    where={"source": "report-2024.pdf"}
+)
+```
+
+## Advanced Usage
+
+### Custom LLM Configuration
+
+```python
+from src.llm_providers import OpenAILLM, OllamaLLM
+
+# OpenAI with custom model
+llm = OpenAILLM(
+    model_name="gpt-4",
+    api_key="sk-...",
+    temperature=0.7
+)
+
+# Ollama with custom URL
+llm = OllamaLLM(
+    model_name="mistral",
+    base_url="http://localhost:11434"
+)
+
+# Use in RAG
+rag = RAGInterface(embedder, store, llm)
+```
+
+### Batch Processing
+
+```python
+questions = [
+    "What is the main topic?",
+    "Who are the authors?",
+    "What are the conclusions?"
+]
+
+for question in questions:
+    result = rag.answer_question(question)
+    print(f"Q: {question}")
+    print(f"A: {result['answer']}\n")
+```
+
+### Error Handling
+
+```python
+try:
+    text = parser.extract_text("document.pdf")
+except FileNotFoundError:
+    print("PDF file not found")
+except Exception as e:
+    print(f"Error processing PDF: {e}")
+
+try:
+    result = rag.answer_question("What is this?")
+except Exception as e:
+    print(f"Error generating answer: {e}")
+```
+
+## Performance Tips
+
+### 1. Adjust Chunk Size
+
+```python
+# Smaller chunks (more granular)
+chunker = TextChunker(chunk_size=300, chunk_overlap=30)
+
+# Larger chunks (more context)
+chunker = TextChunker(chunk_size=1000, chunk_overlap=100)
+```
+
+### 2. Persistent Storage
+
+```python
+# Save vector store to disk
+store = VectorStore(
+    collection_name="docs",
+    persist_directory="./chroma_db"
+)
+
+# Reuse in next run (no re-embedding needed)
+store = VectorStore(
+    collection_name="docs",
+    persist_directory="./chroma_db"
+)
+```
+
+### 3. Batch Embeddings
+
+```python
+# Process all chunks at once
+embeddings = embedder.embed_batch(chunks)
+
+# Instead of one-by-one (slower)
+# embeddings = [embedder.embed(chunk) for chunk in chunks]
+```
+
+## Next Steps
+
+- [Configuration Guide](../user-guide/configuration.md)
+- [LLM Providers](../user-guide/llm-providers.md)
+- [API Reference](../api/overview.md)
