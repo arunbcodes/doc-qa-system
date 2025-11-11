@@ -128,29 +128,83 @@ def process_pdf_with_rag(pdf_paths, llm=None):
         embedding_model = EmbeddingModel()
         print("✓ Embedding model ready\n")
 
-        # Step 2: Initialize vector store
+        # Step 2: Initialize vector store with persistence
         print("Step 2/3: Initializing vector database...")
-        vector_store = VectorStore()
-        print("✓ Vector database ready\n")
+        vector_store = VectorStore(collection_name="pdf_documents", persist_directory="./chroma_db")
+        print("✓ Vector database ready (persisted to ./chroma_db)\n")
 
-        # Step 3: Process PDF(s)
+        # Step 3: Check existing PDFs and process new ones
         print("Step 3/3: Processing PDF(s)...")
-        processor = PDFProcessor(embedding_model=embedding_model, chunk_size=500, chunk_overlap=50)
-        stats = processor.process_and_store(pdf_paths, vector_store, show_progress=True)
-        print(f"\n✓ Processed {stats['total_pdfs']} PDF(s)\n")
+
+        # Check which PDFs are already in the database
+        existing_count = vector_store.get_count()
+        if existing_count > 0:
+            print(f"Found existing database with {existing_count} chunks")
+
+            # Get list of already processed PDFs (simplified check - production would be more sophisticated)
+            try:
+                # Query to check existing sources
+                sample_results = vector_store.collection.get(limit=100)
+                existing_sources = set()
+                if sample_results and "metadatas" in sample_results:
+                    for metadata in sample_results["metadatas"]:
+                        if metadata and "source" in metadata:
+                            existing_sources.add(metadata["source"])
+
+                # Filter out already processed PDFs
+                pdfs_to_process = []
+                already_processed = []
+                for pdf_path in (pdf_paths if isinstance(pdf_paths, list) else [pdf_paths]):
+                    pdf_name = Path(pdf_path).name
+                    if pdf_name in existing_sources:
+                        already_processed.append(pdf_name)
+                    else:
+                        pdfs_to_process.append(pdf_path)
+
+                if already_processed:
+                    print(
+                        f"Skipping {len(already_processed)} already processed PDF(s): {', '.join(already_processed)}"
+                    )
+
+                if not pdfs_to_process:
+                    print("All PDFs already processed. Using existing database.\n")
+                    stats = {"total_pdfs": 0, "total_chunks": 0, "per_pdf_stats": []}
+                else:
+                    print(f"Processing {len(pdfs_to_process)} new PDF(s)...")
+                    processor = PDFProcessor(
+                        embedding_model=embedding_model, chunk_size=500, chunk_overlap=50
+                    )
+                    stats = processor.process_and_store(
+                        pdfs_to_process, vector_store, show_progress=True
+                    )
+                    print(f"\n✓ Processed {stats['total_pdfs']} new PDF(s)\n")
+            except Exception as e:
+                print(f"Error checking existing PDFs: {e}")
+                print("Processing all PDFs...")
+                processor = PDFProcessor(
+                    embedding_model=embedding_model, chunk_size=500, chunk_overlap=50
+                )
+                stats = processor.process_and_store(pdf_paths, vector_store, show_progress=True)
+                print(f"\n✓ Processed {stats['total_pdfs']} PDF(s)\n")
+        else:
+            print("Empty database. Processing all PDFs...")
+            processor = PDFProcessor(
+                embedding_model=embedding_model, chunk_size=500, chunk_overlap=50
+            )
+            stats = processor.process_and_store(pdf_paths, vector_store, show_progress=True)
+            print(f"\n✓ Processed {stats['total_pdfs']} PDF(s)\n")
 
         # Summary
         print("=" * 80)
-        print("✅ PDF Processing Complete!")
+        print("✅ Database Ready!")
         print("=" * 80)
-        if len(pdf_paths) == 1:
-            print(f"Document: {Path(pdf_paths[0]).name}")
-        else:
-            print(f"Documents: {len(pdf_paths)} PDFs")
-        print(f"Total Chunks: {stats['total_chunks']}")
-        print(f"Vector DB: {vector_store.get_count()} embeddings stored")
-        if len(pdf_paths) > 1:
-            print("\nPer-PDF Statistics:")
+        total_pdfs = len(pdf_paths) if isinstance(pdf_paths, list) else 1
+        if stats.get("total_pdfs", 0) > 0:
+            print(f"New PDFs processed: {stats['total_pdfs']}")
+            print(f"New chunks added: {stats['total_chunks']}")
+        print(f"Total in database: {vector_store.get_count()} chunks")
+        if stats.get("per_pdf_stats"):
+            print("\nNewly Processed:")
             for pdf_stat in stats["per_pdf_stats"]:
                 print(f"  • {pdf_stat['pdf_name']}: {pdf_stat['num_chunks']} chunks")
         print("=" * 80)
@@ -194,9 +248,9 @@ def demo_mode(pdf_paths, llm=None):
     if isinstance(pdf_paths, str):
         pdf_paths = [pdf_paths]
 
-    # Process PDF(s)
+    # Process PDF(s) with persistence
     embedding_model = EmbeddingModel()
-    vector_store = VectorStore()
+    vector_store = VectorStore(collection_name="pdf_documents", persist_directory="./chroma_db")
     processor = PDFProcessor(embedding_model=embedding_model)
 
     print(f"Processing {len(pdf_paths)} PDF(s)...")
