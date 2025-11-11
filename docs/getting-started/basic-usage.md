@@ -39,6 +39,7 @@ python main_rag.py <pdf_file1> <pdf_file2> [pdf_file3 ...]
 - Context-aware responses
 - Source attribution
 - **Multi-PDF support**: Query across multiple documents simultaneously
+- **Persistent database**: PDFs saved to disk, survive restarts
 
 **Examples:**
 ```bash
@@ -207,6 +208,54 @@ result = rag.answer_question("What is the policy?", show_context=True)
 for chunk in result['context']:
     print(f"Source: {chunk['metadata']['source']}")
     print(f"Text: {chunk['text'][:200]}...")
+```
+
+## Database Persistence
+
+### How Persistence Works
+
+The vector database is automatically saved to `./chroma_db`:
+
+```bash
+# First run - processes PDFs
+python main_rag.py doc1.pdf doc2.pdf
+# Creates: ./chroma_db/ directory
+
+# Second run - skips already processed PDFs
+python main_rag.py doc1.pdf doc2.pdf doc3.pdf
+# Only processes doc3.pdf (doc1 and doc2 already in database)
+
+# Third run - query without re-uploading
+python main_rag.py doc1.pdf
+# Uses existing database, no processing needed
+```
+
+### Managing the Database
+
+**Clear the database:**
+```bash
+# Remove the database directory to start fresh
+rm -rf ./chroma_db
+```
+
+**Check database contents:**
+```python
+from src import VectorStore
+
+store = VectorStore(collection_name="pdf_documents", persist_directory="./chroma_db")
+print(f"Total chunks: {store.get_count()}")
+
+# Get sample to see sources
+results = store.collection.get(limit=10)
+sources = {meta.get('source') for meta in results['metadatas'] if meta}
+print(f"PDFs in database: {sources}")
+```
+
+**Force re-processing:**
+```bash
+# Delete database and run again
+rm -rf ./chroma_db
+python main_rag.py doc1.pdf doc2.pdf
 ```
 
 ## Advanced Usage

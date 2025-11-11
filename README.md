@@ -195,8 +195,16 @@ python main_rag.py doc1.pdf doc2.pdf --demo
 The system automatically:
 - Processes all PDFs with source tracking metadata
 - Combines chunks into a unified vector database
+- Persists data to `./chroma_db` directory
+- Skips already-processed PDFs on subsequent runs
 - Attributes answers to specific source documents
 - Maintains separate statistics per PDF
+
+**Persistence:**
+The vector database is saved to disk, so you can:
+- Stop and restart the program without losing data
+- Add new PDFs without re-processing old ones
+- Query previously uploaded PDFs immediately
 
 ## Using as a Library
 
